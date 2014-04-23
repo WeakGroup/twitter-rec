@@ -35,7 +35,7 @@ class Logger(object):
       if level < self.level:
           return
       with log_mutex:
-        caller = sys._getframe(kw.get('caller_frame', 1))
+        caller = sys._getframe(kw.get('caller_frame', 2))
         filename = caller.f_code.co_filename
         lineno = caller.f_lineno
         now = time.time() - program_start
@@ -43,7 +43,7 @@ class Logger(object):
           exc = ''.join(traceback.format_exc())
         else:
           exc = None
-        print >> sys.stderr, '%s %.3f:%s:%d: %s' % (Logger.level_to_char[level], now, os.path.basename(filename), lineno, msg % args)
+        print >> sys.stderr, '[--%s-- %.3f|%s:%d] %s' % (Logger.level_to_char[level], now, os.path.basename(filename), lineno, msg % args)
         if exc:
           print >> sys.stderr, exc
         

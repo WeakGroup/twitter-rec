@@ -1,9 +1,12 @@
 import twitter
 import util
 from util import logger
+from collections import deque
 
 class Crawler(object):
     CELEBRITY_THRESHOLD = 5000
+    CELEBRITY_MAX_COUNT = 100 * 1000
+
     def __init__(self, conf_file):
         self.conf_file = conf_file
         self.credential = util.parse_credential_conf(self.conf_file)
@@ -11,7 +14,8 @@ class Crawler(object):
         self.api = twitter.Api(consumer_key = self.credential['consumer_key'], consumer_secret = self.credential['consumer_secret'],
                 access_token_key = self.credential['access_token_key'], access_token_secret = self.credential['access_token_secret'])
 
-        if self.api.VerifyCredentials():
+        self.myself = self.api.VerifyCredentials()
+        if self.myself:
             logger.I('Twitter crawler gets ready')
         else:
             logger.F('Twitter crawler can\'t get credential')
@@ -20,9 +24,24 @@ class Crawler(object):
         
     
     def crawl(self):
-        users = self.api.GetFriends()
-        
-        for user in users:
-            if user.followers_count >= Crawler.CELEBRITY_THRESHOLD:
-                logger.D('%s has %d followers, add to the userhouse', user.name, user.followers_count)
-                self.celebrity.add(user)
+        queue = deque()
+        queue.append(self.myself)
+        while True:
+            try:
+                cur_user = queue.popleft()
+            except IndexError:
+                return
+            logger.D('Geting friends of user %s', cur_user.name)
+            users = self.api.GetFriends(user_id = cur_user.id)
+            logger.D('Get %d users', len(users))
+ 
+            for user in users:
+                if user.followers_count >= Crawler.CELEBRITY_THRESHOLD:
+                    if user in queue:
+                        continue
+                    queue.append(user)
+                    self.celebrity.add(user)
+                    logger.D('%s has %d followers, add to the userhouse', user.name, user.followers_count)
+                    if len(self.celebrity) >= Crawler.CELEBRITY_MAX_COUNT:
+                        return
+            logger.D('Finish dealing with user %s', cur_user.name)
