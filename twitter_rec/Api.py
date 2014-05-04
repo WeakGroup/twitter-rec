@@ -5,6 +5,8 @@ import urllib2
 import urllib
 import httplib, StringIO
 from .debug import VerboseHTTPHandler 
+from .util import logger
+from .util import unique_order
 
 URL = "https://twitter.com"
 
@@ -62,11 +64,66 @@ class Session(object):
                               "authenticity_token" : atoken}
                               )
     
-    info = self._session.open(URL + "/sessions", form) 
+    info = self._session.open(URL+ "/sessions", form) 
 
     # Check if it's directed to error page.
     if "error" in info.url:
       raise Exception, "Username or password error!"
 
-  def read(self, url):
-    return self._session.open(url).read()
+    self.myself = self._parse_user(info.read())
+    return self.myself
+
+  
+  def _parse_user(self, source):
+    user_id = re.search('data-user-id="([0-9]+)"', source).group(1)
+    user_name = re.search('data-screen-name="(\w+)"', source).group(1)
+    friends = re.search(r'<span [^>]+>Following</span>\s+<span [^>]+>([0-9]+)</span>', source).group(1)
+    followers = re.search(r'<span [^>]+>Followers</span>\s+<span [^>]+>([0-9]+)</span>', source).group(1)
+
+    return {'user_id':user_id, 'user_name':user_name, 'friends':friends, 'followers':followers}
+
+  def _parse_friends(self, source):
+    user_ids = unique_order(re.findall('(?<=data-user-id=")[0-9]+"', source))
+    user_names = unique_order(re.findall('(?<=data-screen-name=")\w+"', source))
+    users = []
+    for id, name in zip(user_ids, user_names):
+      users.append({'user_id':id, 'user_name': name})
+    return users[1:]
+   
+  def get_user(self. user_id = None, user_name = None):
+     if user_id is not None:
+      url = '/?id=%s' % user_id
+    else:
+      if user_name is None:
+        user_name = self.myself['user_name']
+      url = '/%s' % user_name
+
+    logger.D('url=%s', url)
+    page = self.read(url)
+
+    return self._parse_user(page)
+   
+  def get_friends(self, user_id = None, user_name = None):
+    if user_id is not None:
+      url = '/?id=%s/following' % user_id
+    else:
+      if user_name is None:
+        user_name = self.myself['user_name']
+      url = '/%s/following' % user_name
+
+    logger.D('url=%s', url)
+    page = self.read(url)
+    
+    friends = self._parse_friends(page)
+    return friends
+    
+  
+  def _save_page(self, page, path):
+      with open(path, 'w') as f:
+          print >> f, page
+
+  def read(self, url, post_data = None):
+    try:
+      return self._session.open(URL + url, post_data).read()
+    except Exception, e:
+      print e

@@ -8,12 +8,4 @@ PASSWD = "bigdata"
 s = Api.Session(USERNAME, PASSWD, debug=False)
 s.connect()
 
-counter = 0
-
-while True:
-  _ = s.read("/AllenboChina/followers")
-  if "eason" in _:
-    print counter 
-    counter += 1
-  else:
-    assert False
+s.get_friends()

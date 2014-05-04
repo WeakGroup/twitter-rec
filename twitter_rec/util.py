@@ -80,3 +80,10 @@ def parse_credential_conf(filename):
                 dic[key] = value
                 logger.D('Get key/value [%s|%s]', key, value)
     return dic
+
+def unique_order(list):
+  rst = []
+  for x in list:
+    if x not in rst:
+      rst.append(x)
+  return rst
