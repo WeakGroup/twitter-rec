@@ -1,55 +1,75 @@
-import twitter
 import util
 from util import logger
 from collections import deque
 import time
+import os
+import pickle
+
+from .Api import Session
+
+class Container(object):
+    def __init__(self, path):
+        self.path = path
+        self.max_incr = 500
+        self.incr_count = 0
+        if os.path.exists(self.path):
+            logger.D('Data already exists, load from %s', self.path)
+            with open(self.path) as f:
+                self.data = pickle.load(f)
+                logger.D('Load %d celebrities', len(self.data))
+        else:
+            logger.D('Set data path to %s', self.path)
+        
+    def add(self, user):
+        if user in self.data:
+            return
+        self.incr_count += 1
+        if self.incr_count == self.max_incr:
+            self._flush()
+            self.incr_count = 0
+
+    def _flush(self):
+        with open(self.path, 'w') as f:
+            pickle.dump(self.data, f, protocol = -1)
+
+    def __len__(self):
+        return len(self.data)
+            
 
 class Crawler(object):
     CELEBRITY_THRESHOLD = 5000
     CELEBRITY_MAX_COUNT = 100 * 1000
-    REQUEST_INTERVAL = 10
 
-    def __init__(self, conf_file):
-        self.conf_file = conf_file
-        self.credential = util.parse_credential_conf(self.conf_file)
-        self.api = twitter.Api(consumer_key = self.credential['consumer_key'], consumer_secret = self.credential['consumer_secret'],
-                access_token_key = self.credential['access_token_key'], access_token_secret = self.credential['access_token_secret'])
-
-        self.myself = self.api.VerifyCredentials()
+    def __init__(self, username_or_email, password, checkpoint_path):
+        self.session = Session(username_or_email, password, debug = False)
+        self.myself = self.session.connect()
         if self.myself:
             logger.I('Twitter crawler gets ready')
         else:
             logger.F('Twitter crawler can\'t get credential')
 
-        self.celebrity = set()
-        
+        self.celebrity = Container(checkpoint_path)
     
     def crawl(self):
         queue = deque()
         queue.append(self.myself)
-        last_req_time = time.time()
         while True:
             try:
                 cur_user = queue.popleft()
             except IndexError:
                 return
-            logger.D('Geting friends of user %s', cur_user.name)
-            now = time.time()
-            interval = now - last_req_time
-            if interval < Crawler.REQUEST_INTERVAL:
-              logger.D('sleep %fs', Crawler.REQUEST_INTERVAL - interval)
-              time.sleep(Crawler.REQUEST_INTERVAL - interval)
-            last_req_time = time.time()
-            users = self.api.GetFriends(user_id = cur_user.id)
+            logger.D('Geting friends of user %s', cur_user['user_name'])
+            users = self.session.get_friends(user_name= cur_user['user_name'])
             logger.D('Get %d users', len(users))
  
             for user in users:
-                if user.followers_count >= Crawler.CELEBRITY_THRESHOLD:
-                    if user in queue:
+                user_full = self.session.get_user(user_name = user['user_name'])
+                if user_full['followers'] >= Crawler.CELEBRITY_THRESHOLD:
+                    if user_full in queue:
                         continue
-                    queue.append(user)
-                    self.celebrity.add(user)
-                    logger.D('%s has %d followers, add to the userhouse', user.name, user.followers_count)
+                    queue.append(user_full)
+                    self.celebrity.add(user_full)
+                    logger.D('%s has %d followers, add to the userhouse', user_full['user_name'], user_full['followers'])
                     if len(self.celebrity) >= Crawler.CELEBRITY_MAX_COUNT:
                         return
-            logger.D('Finish dealing with user %s', cur_user.name)
+            logger.D('Finish dealing with user %s', cur_user[ 'user_name'])

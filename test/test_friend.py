@@ -8,4 +8,6 @@ PASSWD = "bigdata"
 s = Api.Session(USERNAME, PASSWD, debug=False)
 s.connect()
 
-s.get_friends()
+users = s.get_friends()
+for user in users:
+    print user['user_name'], user['user_id']

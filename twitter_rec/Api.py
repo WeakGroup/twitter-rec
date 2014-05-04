@@ -83,15 +83,15 @@ class Session(object):
     return {'user_id':user_id, 'user_name':user_name, 'friends':friends, 'followers':followers}
 
   def _parse_friends(self, source):
-    user_ids = unique_order(re.findall('(?<=data-user-id=")[0-9]+"', source))
-    user_names = unique_order(re.findall('(?<=data-screen-name=")\w+"', source))
+    user_ids = unique_order(re.findall('(?<=data-user-id=")[0-9]+', source))
+    user_names = unique_order(re.findall('(?<=data-screen-name=")\w+', source))
     users = []
     for id, name in zip(user_ids, user_names):
       users.append({'user_id':id, 'user_name': name})
     return users[1:]
    
-  def get_user(self. user_id = None, user_name = None):
-     if user_id is not None:
+  def get_user(self, user_id = None, user_name = None):
+    if user_id is not None:
       url = '/?id=%s' % user_id
     else:
       if user_name is None:
