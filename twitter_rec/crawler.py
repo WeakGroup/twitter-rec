@@ -42,7 +42,7 @@ class Container(object):
             
 
 class Crawler(object):
-    CELEBRITY_THRESHOLD = 10000
+    CELEBRITY_THRESHOLD = 50000
     CELEBRITY_MAX_COUNT = 100 * 1000
 
     def __init__(self, username_or_email, password, checkpoint_path):
