@@ -1,57 +1,72 @@
-import urllib2
-import urllib
+import os
 import re
 import cookielib
-import sqlite3
-import sys
+import urllib2
+import urllib
+import httplib, StringIO
+from .debug import VerboseHTTPHandler 
 
-class Api(object):
-    '''
-    This Api needs a firefox local cookie to get cookie proteced content from twitter. So pass a
-    cookie path as the parameter
-    '''
-    def __init__(self, cookie_path):
-        self.host = 'twitter'
-        self.header =  {'User-agent' : 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'}  # fake a user agent, some websites (like google) don't like automated exploration
-        self.cookies_db = self.cookie_path
-        if not os.path.exists(filename):
-            raise Exception, 'File %s Not Found' % (cookie_path)
+URL = "https://twitter.com"
 
-        self.cookiejar = self._init_cookies(self.host)
-        self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookiejar))
 
-    def _init_cookies(self, host):
-        cj = cookielib.LWPCookieJar()
-        con = sqlite3.connect(self.cookie_path)
-        cur = con.cursor()
+class Session(object):
+  """ Twitter api session """
 
-        CONTENTS = "host, path, isSecure, expiry, name, value"
-        sql = "SELECT {c} FROM moz_cookies WHERE host LIKE '%{h}%'".format(c=CONTENTS, h=host)
-        cur.execute(sql)
-        for item in cur.fetchall():
-            c = cookielib.Cookie(0, item[4], item[5],
-                None, False,
-                item[0], item[0].startswith('.'), item[0].startswith('.'),
-                item[1], False,
-                item[2],
-                item[3], item[3]=="",
-                None, None, {})
-            cj.set_cookie(c)
-        return cj
+  def __init__(self, username, passwd, user_agent = None, debug=False):
+    self._username = username
+    self._passwd = passwd
 
-    def _connection(url):
-        try:
-            request = urllib2.Request('https://' + self.host + '.com/' + url, headers = self.header)
-            fd = self.opener.open(request)
-            return fd.read()
-        except urllib2.HTTPError, e:
-            print e
-            sys.exit(0)
+    if user_agent is None:
+      # fake a user agent, some websites (like google) don't like automated exploration
+      user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+
+    self._user_agent = user_agent
+    self._cj = None
+    self._session = None
+    self._debug = debug
+
+  def connect(self):
+    self._cj = cookielib.CookieJar() 
+
+    if self._debug:
+      self._session = urllib2.build_opener(VerboseHTTPHandler,
+                                           urllib2.HTTPCookieProcessor(self._cj))
+    else:
+      self._session = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cj))
     
-    def _save_page(source, filename):
-        with open(filaname, 'w') as f:
-            print >> f, source
+    _ = dict(self._session.addheaders)
+    _['User-Agent'] = self._user_agent
+    _['accept-language'] = "zh-CN,zh;q=0.8,en;q=0.6,et;q=0.4,zh-TW;q=0.2" 
 
-    def verifyCredentials():
-        page_source = self._connection('')
-        self._save_page(page_source, page)
+    self._session.addheaders = list(_.items())
+    
+    info = self._session.open(URL)  
+
+    if info.code != 200:
+      raise Exception, "Can not access Twitter homepage!"
+
+    content = info.read()
+    matched = re.search(r'"authenticity_token" value="([a-zA-Z0-9]*)"', content) 
+
+    assert matched is not None
+
+    # Extract access token from content.
+    atoken = matched.group(1)
+
+    form = urllib.urlencode({ "session[username_or_email]" : self._username,
+                              "session[password]" : self._passwd,
+                              "return_to_ssl" : "true",
+                              "scribe_log" : "",
+                              "remember_me" : "1",
+                              "redirect_after_login" : "/",
+                              "authenticity_token" : atoken}
+                              )
+    
+    info = self._session.open(URL + "/sessions", form) 
+
+    # Check if it's directed to error page.
+    if "error" in info.url:
+      raise Exception, "Username or password error!"
+
+  def read(self, url):
+    return self._session.open(url).read()
