@@ -5,5 +5,5 @@ homework for big data, recommend some celebrities to you based on your interests
 
 **Requires**
   
-  * [python-twitter](http://github.com/allenbo/python-twitter)
   * [spartan](http://github.com/rjpower/spartan)
+  * [BeautifulSoup(version>4)](http://www.crummy.com/software/BeautifulSoup/)
