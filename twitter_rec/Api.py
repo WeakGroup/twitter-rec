@@ -7,13 +7,13 @@ import httplib, StringIO
 from .debug import VerboseHTTPHandler 
 from .util import logger
 from .util import unique_order
+from bs4 import BeautifulSoup as BS
 
 URL = "https://twitter.com"
 
 
 class Session(object):
   """ Twitter api session """
-
   def __init__(self, username, passwd, user_agent = None, debug=False):
     self._username = username
     self._passwd = passwd
@@ -70,54 +70,80 @@ class Session(object):
     if "error" in info.url:
       raise Exception, "Username or password error!"
 
-    self.myself = self._parse_user(info.read())
-    return self.myself
-
-  
   def _parse_user(self, source):
-    user_id = re.search('data-user-id="([0-9]+)"', source).group(1)
-    user_name = re.search('data-screen-name="(\w+)"', source).group(1)
-    friends = re.search(r'<span [^>]+>Following</span>\s+<span [^>]+>([0-9]+)</span>', source).group(1)
-    followers = re.search(r'<span [^>]+>Followers</span>\s+<span [^>]+>([0-9]+)</span>', source).group(1)
+    def _convert_string_to_int(number):
+      number = number.replace(',', '')
+      if number.endswith('K') or number.endswith('k'):
+        return int(float(number[:-1]) * 1000)
+      if number.endswith('M') or number.endswith('m'):
+        return int(float(number[:-1]) * 1000000)
+      else:
+        return int(number)
+    
+    soup = BS(source)
 
-    return {'user_id':user_id, 'user_name':user_name, 'friends':friends, 'followers':followers}
+    title = soup.find("title").string
+    _ = re.search(u'(.*) \((.*)\) on Twitter', title)
+
+    user_name = unicode(_.group(1))
+    user_id = unicode(_.group(2))
+
+    try:
+      friends = str(soup.find("a", class_ = "js-nav", 
+                              attrs={'data-nav':'following', 
+                                     "data-element-term" : "following_stats"}).strong.string)
+    except AttributeError:
+      friends = str(soup.find("a", class_ = "js-nav", 
+                              attrs={'data-nav':'following'}).find_all("span")[1].string)
+    
+    friends = _convert_string_to_int(friends) 
+    #print "friends :", friends
+    
+    try:
+      followers = str(soup.find("a", class_ = "js-nav", 
+                                attrs={"data-nav" : "followers", 
+                                       "data-element-term" : "follower_stats"}).strong.string)
+    except AttributeError:
+      followers = str(soup.find("a", class_ = "js-nav", 
+                                attrs={"data-nav":"followers"}).find_all("span")[1].string)
+
+    followers = _convert_string_to_int(followers)
+
+    return {'user_id':user_id, 
+            'user_name':user_name,
+            'friends':friends, 
+            'followers':followers}
+
 
   def _parse_friends(self, source):
-    user_ids = unique_order(re.findall('(?<=data-user-id=")[0-9]+', source))
-    user_names = unique_order(re.findall('(?<=data-screen-name=")\w+', source))
+    soup = BS(source) 
+    divs = soup.find_all("div", class_="stream-item-header")
     users = []
-    for id, name in zip(user_ids, user_names):
-      users.append({'user_id':id, 'user_name': name})
-    return users[1:]
-   
-  def get_user(self, user_id = None, user_name = None):
-    if user_id is not None:
-      url = '/?id=%s' % user_id
-    else:
-      if user_name is None:
-        user_name = self.myself['user_name']
-      url = '/%s' % user_name
 
+    for i in divs:
+      user_name = i.find('strong').string
+      user_id = i.find('span', class_ = "username").string
+      users.append({'user_id' : user_id, 'user_name' : user_name})
+    
+    return users
+   
+  def get_user(self, user_id):
+    url = '/%s' % user_id
     logger.D('url=%s', url)
     page = self.read(url)
 
     return self._parse_user(page)
    
-  def get_friends(self, user_id = None, user_name = None):
-    if user_id is not None:
-      url = '/?id=%s/following' % user_id
-    else:
-      if user_name is None:
-        user_name = self.myself['user_name']
-      url = '/%s/following' % user_name
+
+  def get_friends(self, user_id):
+    url = '/%s/following' % user_id
 
     logger.D('url=%s', url)
     page = self.read(url)
-    
     friends = self._parse_friends(page)
     return friends
     
-  
+
   def _save_page(self, page, path):
       with open(path, 'w') as f:
           print >> f, page
