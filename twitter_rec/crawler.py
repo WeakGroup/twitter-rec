@@ -146,4 +146,6 @@ class Crawler(object):
           logger.D('Push %d users to task queue', len(users))
 
           for u in users:
+            if u in self._task_queue.queue or u in self.celebrity:
+              continue
             self._task_queue.put(u)
