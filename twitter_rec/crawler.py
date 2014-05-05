@@ -22,8 +22,9 @@ class Checkpointer(threading.Thread):
             with open(self.path) as f:
                 self._container, user_list = pickle.load(f)
                 logger.D('Load %d celebrities', len(self._container))
+                logger.D('Load %d queued user', len(user_list))
                 random.shuffle(user_list)
-                self._user_queue = Queue.Queue(128)
+                self._user_queue = Queue.Queue()
                 for user in user_list:
                     self._user_queue.put(user)
         else:
@@ -78,6 +79,12 @@ class Container(object):
     def __contains__(self, user):
       return user['user_id'] in self._data
 
+    def keys(self):
+      return self._data.keys()
+
+    def __getitem__(self, key):
+      return self._data[key]
+
 
 _lock = threading.Lock()
 
@@ -115,7 +122,8 @@ class Crawler(object):
             if len(self._celebrity) >= Crawler.CELEBRITY_MAX_COUNT:
               return
 
-    def __init__(self, username_or_email, password, checkpoint, n_threads = 10):
+    def __init__(self, username_or_email, password, checkpoint, n_threads = 32):
+        self.nthread = n_threads
         self.session = Session(username_or_email, password, debug = False)
         self.session.connect()
         self.celebrity = checkpoint.get_container()
@@ -132,9 +140,18 @@ class Crawler(object):
 
     def crawl(self):
         if self._user_queue.empty():
-          logger.D('There is no reserved user in container, Initialize with liao_easion')
-          user_seed = self.session.get_user(user_id = "liao_eason") 
-          self._user_queue.put(user_seed)
+          if len(self.celebrity) == 0:
+            logger.D('There is no reserved user in container, Initialize with liao_easion')
+            user_seed = self.session.get_user(user_id = "liao_eason") 
+            self._user_queue.put(user_seed)
+          else:
+            keys = self.celebrity.keys()
+            init_user = []
+            for i in range(self.nthread):
+              init_user.append(self.celebrity[random.choice(keys)])
+            init_user = util.unique_order(init_user)
+            for user in init_user:
+              self._user_queue.put(user)
 
         while True:
           try:
