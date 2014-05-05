@@ -44,9 +44,9 @@ class Logger(object):
           exc = ''.join(traceback.format_exc())
         else:
           exc = None
-        print >> sys.stderr, '[%s--%s-- %.3f|[%s:%d] %s' % (socket.gethostname(),
+        print >> sys.stderr, '[%s--%s-pid:%s|[%s:%d] %s' % (socket.gethostname(),
                                                             Logger.level_to_char[level], 
-                                                            now, os.path.basename(filename), 
+                                                            os.getpid(), os.path.basename(filename), 
                                                             lineno, 
                                                             msg % args)
         if exc:

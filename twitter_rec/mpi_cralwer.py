@@ -38,11 +38,10 @@ class Container(threading.Thread):
   
   def flush(self):
     with self._lock:
-      logger.D("------------ Flush to checkpoint %s --------------", self.checkpath)
+      logger.D("------------ Flush to checkpoint file %s --------------", self.checkpath)
       with open(self.checkpath, "w") as f:
         pickle.dump(self._table, f, protocol = -1)
     
-   
   def is_exist(self, user_id):
     return user_id in self._table
 
@@ -53,22 +52,34 @@ class Container(threading.Thread):
       self._table[user_id].extend(followers_list)
 
 
-def crawl(target, container):
+def crawl(target, container, rank):
   session = Session(USERNAME, PASSWD, debug = False)
   session.connect()
   
-  for user in target:
+  for idx, user in enumerate(target):
     if container.is_exist(user):
       logger.D("%s has been cralwed, SKIP.", user)
       continue
     
     has_more = True
     cursor = -1
-    while has_more:
-      has_more, cursor, users = session.get_followers(user, cursor)
-      logger.D("Add %d followers to user %s", len(users), user)
-      container.add(user, users)
-    
+    count = 0
+    round = 0
+
+    try:
+      while has_more:
+        has_more, cursor, users = session.get_followers(user, cursor)
+        count += len(users)
+        round += 1
+
+        # Log every 10 rounds.
+        if round % 10 == 0:
+          logger.D("rank %s adds %d followers to user %s", rank, count, user)
+
+        container.add(user, users)
+    except Exception as e:
+      logger.D("Catched exceptions %s", e)
+
     logger.D("###### Finished User [%s] ########", user)
 
   logger.D("Worker Finish")
@@ -97,7 +108,7 @@ def main():
   
   container = Container(checkpath)
   container.start()
-  crawl(local_followees, container)
+  crawl(local_followees, container, rank)
   MPI.COMM_WORLD.Barrier()
 
 

@@ -156,8 +156,6 @@ class Session(object):
   def _try_parse_style2(self, soup):
     usernames = soup.find_all("a", class_="js-action-profile-name")
     userids = soup.find_all("a", class_="ProfileCard-screennameLink")
-    if len(usernames) == 0:
-      raise Exception, "style2 error?"
     return usernames, userids
 
   def _parse_followers(self, html):
@@ -180,7 +178,6 @@ class Session(object):
     # t[2] : Followers.
     """
     url = '/%s/followers/users?cursor=%s' % (user_id, cursor)
-    logger.D('url=%s', url)
     page = self.read(url)
     js = json.loads(page)
     has_more = js['has_more_items']
