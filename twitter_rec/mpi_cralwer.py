@@ -46,7 +46,7 @@ class Container(threading.Thread):
     return user_id in self._table
 
   def add(self, user_id, followers_list):
-    if user_id not in followers_list:
+    if user_id not in self._table:
       self._table[user_id] = []
     with self._lock:
       self._table[user_id].extend(followers_list)
