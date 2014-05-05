@@ -8,6 +8,7 @@ from .debug import VerboseHTTPHandler
 from .util import logger
 from .util import unique_order
 from bs4 import BeautifulSoup as BS
+import simplejson as json
 
 URL = "https://twitter.com"
 
@@ -142,7 +143,51 @@ class Session(object):
     page = self.read(url)
     friends = self._parse_friends(page)
     return friends
-    
+
+  # Parse followers style1
+  def _try_parse_style1(self, soup):
+    usernames = soup.find_all("strong", class_="fullname js-action-profile-name")
+    userids = soup.find_all("span", class_="username js-action-profile-name")
+    if len(usernames) == 0:
+      raise Exception, "style1 error?"
+    return usernames, userids
+
+  # Parse followers style2
+  def _try_parse_style2(self, soup):
+    usernames = soup.find_all("a", class_="js-action-profile-name")
+    userids = soup.find_all("a", class_="ProfileCard-screennameLink")
+    if len(usernames) == 0:
+      raise Exception, "style2 error?"
+    return usernames, userids
+
+  def _parse_followers(self, html):
+    soup = BS(html)
+    try:
+      usernames, userids = self._try_parse_style1(soup)
+    except Exception as e:
+      usernames, userids = self._try_parse_style2(soup)
+
+    _ = zip(userids, usernames)
+    users = []
+    for u in _:
+      users.append({'user_id' : u[0].text.strip(), 'user_name' : u[1].text.strip()})
+    return users
+
+  def get_followers(self, user_id, cursor = -1):
+    """ Get followers of one user. Returns a tuple.
+    # t[0] : Whether has more followers to get.
+    # t[1] : Updated cursor. Pass to next function call.
+    # t[2] : Followers.
+    """
+    url = '/%s/followers/users?cursor=%s' % (user_id, cursor)
+    logger.D('url=%s', url)
+    page = self.read(url)
+    js = json.loads(page)
+    has_more = js['has_more_items']
+    updated_cursor = js['cursor']
+    items_html = js['items_html']
+    return has_more, updated_cursor, self._parse_followers(items_html) 
+
 
   def _save_page(self, page, path):
       with open(path, 'w') as f:

@@ -50,7 +50,8 @@ class Checkpointer(threading.Thread):
         for elm in list(self._user_queue.queue):
             user_list.append(elm)
         with open(self.path, 'w') as f:
-            logger.D('----------------------Flush to checkpoint file %s------------------------', self.path)
+            logger.D('----------------------Flush to checkpoint file %s------------------------', 
+                     self.path)
             pickle.dump((self._container, user_list), f, protocol = -1)
     
     def run(self):
@@ -88,13 +89,13 @@ class Container(object):
 
 _lock = threading.Lock()
 
-class Crawler(object):
+class FolloweeCrawler(object):
     CELEBRITY_THRESHOLD = 50000
     CELEBRITY_MAX_COUNT = 100 * 1000
 
     class Worker(threading.Thread):
       def __init__(self, username, password, task_queue, user_queue, celebrity):
-        super(Crawler.Worker, self).__init__()
+        super(FolloweeCrawler.Worker, self).__init__()
         self.session = Session(username, password, debug=False) 
         self._task_queue = task_queue 
         self._user_queue = user_queue
@@ -112,14 +113,15 @@ class Crawler(object):
               continue
           user_full = self.session.get_user(user_id = user['user_id'])
 
-          if user_full['followers'] >= Crawler.CELEBRITY_THRESHOLD:
+          if user_full['followers'] >= FolloweeCrawler.CELEBRITY_THRESHOLD:
             self._user_queue.put(user_full)
-            logger.D('%s has %d followers, add to the userhouse', user_full['user_name'], user_full['followers'])
+            logger.D('%s has %d followers, add to the userhouse', 
+                     user_full['user_name'], user_full['followers'])
 
             with _lock:
               self._celebrity.add(user_full)
 
-            if len(self._celebrity) >= Crawler.CELEBRITY_MAX_COUNT:
+            if len(self._celebrity) >= FolloweeCrawler.CELEBRITY_MAX_COUNT:
               return
 
     def __init__(self, username_or_email, password, checkpoint, n_threads = 32):
@@ -132,7 +134,11 @@ class Crawler(object):
         self._workers = [] 
 
         for i in range(n_threads):
-          self._workers.append(Crawler.Worker(username_or_email, password, self._task_queue, self._user_queue, self.celebrity))
+          self._workers.append(FolloweeCrawler.Worker(username_or_email, 
+                                                      password, 
+                                                      self._task_queue, 
+                                                      self._user_queue, 
+                                                      self.celebrity))
 
         for w in self._workers:
           w.start()
@@ -167,3 +173,53 @@ class Crawler(object):
             if u in self._task_queue.queue or u in self.celebrity or u in self._user_queue.queue:
               continue
             self._task_queue.put(u)
+
+
+class FollowerCrawler(object):
+
+  class Worker(threading.Thread):
+    def __init__(self, username, password, task_queue):
+      super(FollowerCrawler.Worker, self).__init__()
+      self._task_queue = task_queue
+      self.daemon = True
+      self.session = Session(username, password, debug = False)
+
+    def run(self):
+      self.session.connect()
+      logger.D("Thread %s is running.", threading.current_thread())
+
+      while True:
+        user = self._task_queue.get()
+          
+
+  def __init__(self, username_or_email, password, checkpoint, n_threads = 8):
+    self.n_threads = n_threads
+    self._task_queue = Queue.Queue()
+    self._username = username_or_email
+    self._password = password
+    with open(checkpoint) as f:
+      _1, _2 = pickle.load(f)
+      self._followees = _1._data
+  
+  def _start_all_workers(self):
+    self._workers = []
+    for i in range(self.n_threads):
+      self._workers.append(FollowerCrawler.Worker(self._username, 
+                                                  self._password,
+                                                  self._task_queue))
+    for w in self._workers:
+      w.start()
+
+
+  def _wait_for_all_workers_finish(self):
+    for w in self._workers:
+      w.join()
+
+  def crawl(self):
+    self._start_all_workers()
+    
+    # Fill the task queue
+    for k, v in self._followees.iteritems():
+      self._task_queue.put(v)
+
+    self._wait_for_all_workers_finish()
