@@ -1,4 +1,5 @@
-beaker-16 slots=8
-beaker-17 slots=8
-beaker-18 slots=8
-beaker-20 slots=8
+beaker-16 slots=16
+beaker-17 slots=16
+beaker-18 slots=16
+beaker-20 slots=16
+beaker-19 slots=16
