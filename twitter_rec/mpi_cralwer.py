@@ -9,7 +9,7 @@ from Api import Session
 
 USERNAME = "liaoyisheng89@sina.com"
 PASSWD = "bigdata"
-data_file = "../data/data"
+data_file = "./data/data"
 
 
 class Container(threading.Thread):
@@ -72,9 +72,9 @@ def crawl(target, container, rank):
         count += len(users)
         round += 1
 
-        # Log every 10 rounds.
-        if round % 10 == 0:
-          logger.D("rank %s adds %d followers to user %s", rank, count, user)
+        # Log every 20 rounds.
+        if round % 20 == 0:
+          logger.D("rank %s adds %d followers to user %s[%s/%s]", rank, count, user, idx, len(target))
 
         container.add(user, users)
     except Exception as e:
