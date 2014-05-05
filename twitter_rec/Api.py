@@ -4,9 +4,9 @@ import cookielib
 import urllib2
 import urllib
 import httplib, StringIO
-from .debug import VerboseHTTPHandler 
-from .util import logger
-from .util import unique_order
+from twitter_rec.debug import VerboseHTTPHandler 
+from twitter_rec.util import logger
+from twitter_rec.util import unique_order
 from bs4 import BeautifulSoup as BS
 import simplejson as json
 

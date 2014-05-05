@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import traceback
+import socket
 
 program_start = time.time()
 log_mutex = threading.Lock()
@@ -43,7 +44,11 @@ class Logger(object):
           exc = ''.join(traceback.format_exc())
         else:
           exc = None
-        print >> sys.stderr, '[--%s-- %.3f|%s:%d] %s' % (Logger.level_to_char[level], now, os.path.basename(filename), lineno, msg % args)
+        print >> sys.stderr, '[%s--%s-- %.3f|[%s:%d] %s' % (socket.gethostname(),
+                                                            Logger.level_to_char[level], 
+                                                            now, os.path.basename(filename), 
+                                                            lineno, 
+                                                            msg % args)
         if exc:
           print >> sys.stderr, exc
         
