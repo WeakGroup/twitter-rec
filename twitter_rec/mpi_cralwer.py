@@ -71,6 +71,7 @@ def crawl(target, container, rank):
         has_more, cursor, users = session.get_followers(user, cursor)
         count += len(users)
         round += 1
+        users = [u['user_id'] for u in users]
 
         # Log every 20 rounds.
         if round % 20 == 0:
