@@ -13,7 +13,7 @@ from .Api import Session
 
 
 class Checkpointer(threading.Thread):
-    INTERVAL = 10
+    INTERVAL = 60
     def __init__(self, path):
         threading.Thread.__init__(self)
         self.path = path
@@ -22,7 +22,8 @@ class Checkpointer(threading.Thread):
             with open(self.path) as f:
                 self._container, user_list = pickle.load(f)
                 logger.D('Load %d celebrities', len(self._container))
-                self._user_queue = Queue.Queue()
+                random.shuffle(user_list)
+                self._user_queue = Queue.Queue(128)
                 for user in user_list:
                     self._user_queue.put(user)
         else:
@@ -146,6 +147,6 @@ class Crawler(object):
           logger.D('Push %d users to task queue', len(users))
 
           for u in users:
-            if u in self._task_queue.queue or u in self.celebrity:
+            if u in self._task_queue.queue or u in self.celebrity or u in self._user_queue.queue:
               continue
             self._task_queue.put(u)
