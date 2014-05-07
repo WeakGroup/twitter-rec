@@ -184,7 +184,17 @@ class Session(object):
     updated_cursor = js['cursor']
     items_html = js['items_html']
     return has_more, updated_cursor, self._parse_followers(items_html) 
+  
 
+  def get_avatar_url(self, user_id):
+    url = '/%s' % user_id
+    page = self.read(url)
+    soup = BS(page)
+    img = soup.find("img", class_="ProfileAvatar-image")
+    if img is not None:
+      return img['src']
+    img = soup.find("img", class_="avatar size73")
+    return img['src']
 
   def _save_page(self, page, path):
       with open(path, 'w') as f:
@@ -192,6 +202,9 @@ class Session(object):
 
   def read(self, url, post_data = None):
     try:
-      return self._session.open(URL + url, post_data).read()
+      if url.startswith("http"):
+        return self._session.open(url, post_data).read()
+      else:
+        return self._session.open(URL + url, post_data).read()
     except Exception, e:
       print e
