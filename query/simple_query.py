@@ -5,7 +5,7 @@ import itertools
 
 fpath = "/ssd/yisheng/tables/top_20_simi.data"
 path = "/ssd/yisheng/tables/"
-username = "@kaifulee"
+username = "@shervin"
 
 con = sqlite3.connect(path + "bigdata.db")
 
