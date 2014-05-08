@@ -21,7 +21,7 @@
       {% for user in friends %}
       <li class = "item">
         <a href="https://twitter.com/{{user.user_name}}">
-          <img src={{user.image_url}} />
+          <img src={{user.image_url}} width="73" height="73"/>
         </a>
         <a href="https://twitter.com/{{user.user_name}}">
           {{user.name}}
@@ -40,7 +40,7 @@
       {% for user in recommended %}
       <li class = "item">
         <a href="https://twitter.com/{{user.user_name}}">
-          <img src={{user.image_url}} />
+          <img src={{user.image_url}} width="73" height="73"/>
         </a>
         <a href="https://twitter.com/{{user.user_name}}">
           {{user.name}}

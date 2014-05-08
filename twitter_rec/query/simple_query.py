@@ -42,6 +42,12 @@ class SimpleQuery(object):
     # Sort the users by similarity scores.
     res = sorted(res, key=lambda a:a[2])[::-1]
     return res[:limit]
+ 
+  def get_user(self, screen_name):
+    cur = self.con.cursor()
+    print screen_name
+    res = cur.execute("SELECT * FROM new_celebrities WHERE screen_name = ?", (screen_name,)).fetchone()
+    return res
 
 if __name__ == '__main__':
   query_celebrities = ['Yelp', 'Fenng']

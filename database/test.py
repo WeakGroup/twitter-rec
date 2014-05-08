@@ -1,17 +1,14 @@
 import sqlite3
 import pickle
 
-con = sqlite3.connect("twitter_db.db")
+con = sqlite3.connect("../data/twitter_db.db")
 
 cur = con.cursor()
 
-cur.execute("SELECT * FROM top_similar")
+cur.execute("SELECT * FROM celebrities")
 
 res = cur.fetchall()
 
-for r in res:
-  if r[0] == u"Fenng":
-    print r
 
 print len(res)
 

@@ -58,6 +58,7 @@ def get_recommended(friends):
   return [x[1] for x in rec]
 
 def filter_user(user):
+  print user.profile_image_url
   return {'description':user.description,
           'followers': user.followers_count,
           'friends': user.friends_count,
@@ -66,8 +67,26 @@ def filter_user(user):
           'user_name': user.screen_name,
           }
 
+def try_get_from_database(screen_name):
+  Q = get_query()
+  res = Q.get_user(screen_name)
+  if res is not None and res[3] is not None:
+    return {'description' : res[2],
+            'name' : res[1],
+            'user_name' : res[0],
+            'image_url' : "../images/images/" + res[3]}
+  return None 
+  
 def get_users(user_list):
   rst = []
-  for user in user_list: 
-    rst.append(filter_user(API.GetUser(screen_name = user)))
+  for user in user_list:
+    res = try_get_from_database(user)
+    if res is None:
+      try:
+        rst.append(filter_user(API.GetUser(screen_name = user)))
+      except Exception as e:
+        print e
+    else:
+      rst.append(res)
   return rst
+

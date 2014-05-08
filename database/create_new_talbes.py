@@ -1,6 +1,6 @@
 import sqlite3
 
-con = sqlite3.connect("twitter_db.db")
+con = sqlite3.connect("../data/twitter_db.db")
 
 def create_celebrities_table():
   cur = con.cursor()
@@ -12,8 +12,9 @@ def create_simi_table():
 
 def create_new_celebrities_table():
   cur = con.cursor()
-  cur.execute("CREATE TABLE celebrities (screen_name text primary key, user_name text, desc text)")
+  cur.execute("CREATE TABLE new_celebrities (screen_name text primary key, user_name text, desc text, img_name text)")
 
+create_new_celebrities_table()
 
 con.commit()
 con.close()
