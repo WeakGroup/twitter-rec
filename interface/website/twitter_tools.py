@@ -54,7 +54,7 @@ def get_friends_with_httpapi(user_name):
   friends_list = []
   count = 0
 
-  while has_more and count < 500:
+  while has_more and count < 100:
     has_more, cursor, friends = SESSION.get_friends(user_name, cursor)
     count += len(friends)
     friends_list.extend(friends)
