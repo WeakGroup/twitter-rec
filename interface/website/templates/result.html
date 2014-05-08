@@ -20,15 +20,31 @@
       <ul class = "list">
       {% for user in friends %}
       <li class = "item">
-        <a href="https://twitter.com/{{user.user_name}}">
-          <img src={{user.image_url}} width="73" height="73"/>
-        </a>
-        <a href="https://twitter.com/{{user.user_name}}">
-          {{user.name}}
-        </a>
-        <label class="grey_text user_screen_name">
-          @{{user.user_name}}
-        </label>
+
+        <div class="image_container">
+          <a href="https://twitter.com/{{user.user_name}}">
+            <img src={{user.image_url}} width="73" height="73"/>
+          </a>
+        </div>
+
+        <div class = "content_container">
+
+          <div class="name_container">
+            <a href="https://twitter.com/{{user.user_name}}">
+              {{user.name}}
+            </a>
+            <label class="grey_text user_screen_name">
+              @{{user.user_name}}
+            </label>
+          </div>
+
+          <div class="decription_container">
+            {{user.description}}
+          </div>
+
+          <div class="clear" />
+
+        </div>
       </li>
       {% endfor %}
       </ul>
@@ -39,15 +55,31 @@
       <ul class = "list">
       {% for user in recommended %}
       <li class = "item">
-        <a href="https://twitter.com/{{user.user_name}}">
-          <img src={{user.image_url}} width="73" height="73"/>
-        </a>
-        <a href="https://twitter.com/{{user.user_name}}">
-          {{user.name}}
-        </a>
-        <label class = "grey_text user_screen_name">
-          @{{user.user_name}}
-        </label>
+
+        <div class="image_container">
+          <a href="https://twitter.com/{{user.user_name}}">
+            <img src={{user.image_url}} width="73" height="73"/>
+          </a>
+        </div>
+
+        <div class = "content_container">
+
+          <div class="name_container">
+            <a href="https://twitter.com/{{user.user_name}}">
+              {{user.name}}
+            </a>
+            <label class="grey_text user_screen_name">
+              @{{user.user_name}}
+            </label>
+          </div>
+
+          <div class="decription_container">
+            {{user.description}}
+          </div>
+
+          <div class="clear" />
+
+        </div>
       </li>
       {% endfor %}
       </ul>

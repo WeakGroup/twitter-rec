@@ -1,6 +1,6 @@
 from twitter_rec.Api import Session
 from twitter_rec.query.simple_query import SimpleQuery
-from twitter_rec import settings
+from twitter_rec import settings 
 
 from twitter_rec.util import logger, parse_conf
 import os
@@ -86,6 +86,7 @@ def filter_user(user):
           }
 
 def try_get_from_database(screen_name):
+  logger.D('using database')
   Q = get_query()
   res = Q.get_user(screen_name)
   if res is not None and res[3] is not None:
@@ -102,10 +103,10 @@ def get_users(user_list):
 
     if res is None:
       try:
+        logger.D('using twitter API')
         rst.append(filter_user(API.GetUser(screen_name = user)))
       except Exception as e:
         print e
     else:
       rst.append(res)
   return rst
-
