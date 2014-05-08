@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Twitter Recommandation</title>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"> </script>
+  <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}base.css" />
+  <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}result.css" />
+</head>
+<body>
+  <div class="form">
+    <form action="/recommend/" method="get" class="search">
+      <input type="text" name="user_name" value="" id="user_name" class="text large" />
+    </form>
+  </div>
+
+  <div class="result">
+    <div class="panel">
+      <h1>Celebrity in Database</h1>
+      <ul class = "list">
+      {% for user in friends %}
+      <li class = "item">
+        <a href="https://twitter.com/{{user.user_name}}">
+          <img src={{user.image_url}} />
+        </a>
+        <a href="https://twitter.com/{{user.user_name}}">
+          {{user.name}}
+        </a>
+        <label class="grey_text user_screen_name">
+          @{{user.user_name}}
+        </label>
+      </li>
+      {% endfor %}
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h1>Celebrity Recommended</h1>
+      <ul class = "list">
+      {% for user in recommended %}
+      <li class = "item">
+        <a href="https://twitter.com/{{user.user_name}}">
+          <img src={{user.image_url}} />
+        </a>
+        <a href="https://twitter.com/{{user.user_name}}">
+          {{user.name}}
+        </a>
+        <label class = "grey_text user_screen_name">
+          @{{user.user_name}}
+        </label>
+      </li>
+      {% endfor %}
+      </ul>
+
+    </div>
+    <div class="clear"> </div>
+  </div>
+
+</body>
+</html>

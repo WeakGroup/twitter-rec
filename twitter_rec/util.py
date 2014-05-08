@@ -69,7 +69,7 @@ class Logger(object):
 
 logger = Logger(Logger.DEBUG)
 
-def parse_credential_conf(filename):
+def parse_conf(filename):
     if not os.path.exists(filename):
         logger.F('configuration file not exists %s', filename) 
     
