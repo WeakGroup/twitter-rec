@@ -15,9 +15,20 @@
 
   <div class="result">
     <div class="panel">
+      <ul class = "list">
+      {% for user in friends %}
+      <li class = "item"><a href="https://twitter.com/{{user}}">{{user}}</a></li>
+      {% endfor %}
+      </ul>
     </div>
 
     <div class="panel">
+      <ul class = "list">
+      {% for user in recommended %}
+      <li class = "item"><a href="https://twitter.com/{{user}}">{{user}}</a></li>
+      {% endfor %}
+      </ul>
+
     </div>
   </div>
 
