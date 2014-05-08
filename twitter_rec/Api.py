@@ -110,10 +110,19 @@ class Session(object):
 
     followers = _convert_string_to_int(followers)
 
+    desc = soup.find("p", class_="ProfileHeaderCard-bio")
+    if desc is None:
+      desc = soup.find("p", class_="bio profile-field")
+  
+    assert desc is not None
+
+    desc = unicode(desc.text.strip())
+
     return {'user_id':user_id, 
             'user_name':user_name,
             'friends':friends, 
-            'followers':followers}
+            'followers':followers,
+            'desc' : desc}
 
 
   def _parse_friends(self, source):

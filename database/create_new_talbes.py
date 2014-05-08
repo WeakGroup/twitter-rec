@@ -10,8 +10,10 @@ def create_simi_table():
   cur = con.cursor()
   cur.execute("CREATE TABLE top_similar (screen_name text, screen_name_similar text, score real)")
 
-create_celebrities_table()
-create_simi_table()
+def create_new_celebrities_table():
+  cur = con.cursor()
+  cur.execute("CREATE TABLE celebrities (screen_name text primary key, user_name text, desc text)")
+
 
 con.commit()
 con.close()
