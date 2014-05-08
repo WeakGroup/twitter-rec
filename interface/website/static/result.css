@@ -1,0 +1,13 @@
+.result {
+  width:800px;
+  margin:0px auto;
+}
+.panel {
+  border:3px black solid;
+  background-color:#303030;
+  float:left;
+}
+
+.clear {
+  clear:both;
+}

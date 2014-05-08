@@ -14,15 +14,9 @@ print credential
 
 SESSION = None
 API = None
-query = None
 
 def get_query():
-  global query
-  if query is None:
-    query = SimpleQuery()
-  return query
-
-
+  return SimpleQuery()
 
 def get_friends_with_twitterapi(user_name):
   global API
@@ -62,3 +56,18 @@ def get_recommended(friends):
   Q = get_query()
   rec = Q.get_all_similar_users(friends)
   return [x[1] for x in rec]
+
+def filter_user(user):
+  return {'description':user.description,
+          'followers': user.followers_count,
+          'friends': user.friends_count,
+          'name': user.name,
+          'image_url': user.profile_image_url,
+          'user_name': user.screen_name,
+          }
+
+def get_users(user_list):
+  rst = []
+  for user in user_list: 
+    rst.append(filter_user(API.GetUser(screen_name = user)))
+  return rst

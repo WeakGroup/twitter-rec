@@ -57,6 +57,8 @@ def recommend(request):
     for f in recommended:
       print f
     
+    friends_in_database = twitter_tools.get_users(friends_in_database)
+    recommended = twitter_tools.get_users(recommended)
     return render(request, 'result.html', {'friends':friends_in_database, 'recommended': recommended})
   else:
     error = 'Not User Name Provided?'
