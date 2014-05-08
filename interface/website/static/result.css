@@ -1,10 +1,17 @@
 .result {
-  width:800px;
+  width:680px;
+  padding-top:40px;
   margin:0px auto;
 }
+
+.grey_text {
+  color:#818181;
+}
+
 .panel {
-  border:3px black solid;
-  background-color:#303030;
+  background-color:rgba(196,196,196);
+  border:1px solid #888;
+  border-radius:3px;
   float:left;
 }
 
