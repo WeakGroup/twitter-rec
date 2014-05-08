@@ -29,12 +29,18 @@ def get_friends_with_twitterapi(user_name):
 
 
   try:
+    if API.GetUser(screen_name = user_name).friends > 200:
+      raise Exception
     friends = API.GetFriends(screen_name = user_name)
     return [{'user_id': f.screen_name, 'user_name': f.name} for f in friends]
   except Exception, e:
     global get_friends
     get_friends = get_friends_with_httpapi
-    return get_friends(user_name)
+    try:
+      res = get_friends(user_name)
+    except Exception as e:
+      return None
+    return res
 
 
 def get_friends_with_httpapi(user_name):
@@ -42,9 +48,22 @@ def get_friends_with_httpapi(user_name):
   if SESSION is None:
     SESSION = Session(username = dic['username'], passwd = dic['passwd'])
     SESSION.connect()
-    
-  friends = SESSION.get_friends(user_name)
-  return friends
+  
+  has_more = True
+  cursor = -1
+  friends_list = []
+  count = 0
+
+  while has_more and count < 200:
+    has_more, cursor, friends = SESSION.get_friends(user_name, cursor)
+    count += len(friends)
+    friends_list.extend(friends)
+
+  for f in friends_list:
+    f['user_id'] = f['user_id'][1:]
+    print "#", f
+
+  return friends_list
 
 get_friends = get_friends_with_twitterapi
 
@@ -58,7 +77,6 @@ def get_recommended(friends):
   return [x[1] for x in rec]
 
 def filter_user(user):
-  print user.profile_image_url
   return {'description':user.description,
           'followers': user.followers_count,
           'friends': user.friends_count,
@@ -81,6 +99,7 @@ def get_users(user_list):
   rst = []
   for user in user_list:
     res = try_get_from_database(user)
+
     if res is None:
       try:
         rst.append(filter_user(API.GetUser(screen_name = user)))

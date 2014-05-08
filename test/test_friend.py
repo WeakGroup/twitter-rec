@@ -7,7 +7,10 @@ PASSWD = "bigdata"
 
 s = Api.Session(USERNAME, PASSWD, debug=False)
 s.connect()
+has_more = True
+cursor = -1
 
-users = s.get_friends('Dropbox')
-for user in users:
-    print user['user_name'], user['user_id']
+while has_more:
+  has_more, cursor, users = s.get_friends('Dropbox', cursor)
+  for u in users:
+    print u

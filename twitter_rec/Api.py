@@ -141,19 +141,18 @@ class Session(object):
     url = '/%s' % user_id
     logger.D('url=%s', url)
     page = self.read(url)
-
     return self._parse_user(page)
    
-
-  def get_friends(self, user_id):
-    url = '/%s/following' % user_id
-
-    logger.D('url=%s', url)
+  def get_friends(self, user_id, cursor=-1):
+    url = '/%s/following/users?cursor=%s' % (user_id, cursor)
     page = self.read(url)
-    self._save_page(page, 'page')
-    friends = self._parse_friends(page)
-    return friends
-
+    self._save_page(page, "tmp.html")
+    js = json.loads(page)
+    has_more = js['has_more_items']
+    updated_cursor = js['cursor']
+    items_html = js['items_html']
+    return has_more, updated_cursor, self._parse_followers(items_html) 
+ 
   # Parse followers style1
   def _try_parse_style1(self, soup):
     usernames = soup.find_all("strong", class_="fullname js-action-profile-name")
@@ -194,6 +193,7 @@ class Session(object):
     updated_cursor = js['cursor']
     items_html = js['items_html']
     return has_more, updated_cursor, self._parse_followers(items_html) 
+ 
   
 
   def get_avatar_url(self, user_id):
