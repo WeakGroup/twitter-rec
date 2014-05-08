@@ -124,7 +124,7 @@ class Session(object):
     for i in divs:
       user_name = i.find('strong').string
       user_id = i.find('span', class_ = "username").string
-      users.append({'user_id' : user_id, 'user_name' : user_name})
+      users.append({'user_id' : user_id[1:], 'user_name' : user_name})
     
     return users
    
@@ -141,6 +141,7 @@ class Session(object):
 
     logger.D('url=%s', url)
     page = self.read(url)
+    self._save_page(page, 'page')
     friends = self._parse_friends(page)
     return friends
 
